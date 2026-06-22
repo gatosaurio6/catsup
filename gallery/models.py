@@ -17,3 +17,13 @@ class Post(models.Model):
 
     def __str__(self):
         return f"Post de {self.cat.name} - {self.created_at}"
+
+#comentarios 
+class Comment(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
+    author = models.CharField(max_length=50, default="LoverCat")
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Comentario de {self.author} en Post #{self.post.id}"
