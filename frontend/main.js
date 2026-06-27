@@ -10,7 +10,7 @@ loginBtn.addEventListener('click', async () => {
     };
 
     try {
-        const respuesta = await fetch('AQUI_VA_LA_URL_DEL_BACKEND', {
+        const respuesta = await fetch('http://127.0.0.1:8000/api/login/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -29,6 +29,6 @@ loginBtn.addEventListener('click', async () => {
 
     } catch (error) {
         console.error("Error al conectar con el servidor:", error);
-        alert("El servidor de los gatitos está durmiendo. Intenta más tarde.");
+        alert("El servidor de los gatitos está durmiendo; intenta más tarde.");
     }
 });
