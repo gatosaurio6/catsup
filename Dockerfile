@@ -1,5 +1,5 @@
 # 1. Usar una imagen oficial de Python súper ligera como base
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 # 2. Configurar variables de entorno para que Python funcione mejor en contenedores
 ENV PYTHONDONTWRITEBYTECODE=1
