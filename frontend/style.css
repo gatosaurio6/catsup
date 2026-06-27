@@ -1,0 +1,126 @@
+body {
+    background-image: url('degrado.jpg');
+
+    background-size: cover;       
+    background-position: center;  
+    background-repeat: no-repeat; 
+    
+    background-color: #f0f4f8; 
+    
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: #959595;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.cat-login-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+
+.cat-feature {
+    position: absolute;
+    color: #000;
+    line-height: 1;
+    pointer-events: none;
+}
+
+.ear {
+    font-size: 80px;
+    font-weight: 800;
+    top: -40px;
+    font-family: monospace;
+}
+.ear-left {
+    left: 20px;
+}
+.ear-right {
+    right: 20px;
+}
+
+.cheek {
+    font-size: 140px;
+    top: 60px;
+    font-weight: 300;
+}
+.cheek-left {
+    left: -70px;
+}
+.cheek-right {
+    right: -70px;
+}
+
+.tail {
+    font-size: 150px;
+    right: -120px;
+    top: 40px;
+    font-weight: 300;
+    transform: scaleY(1.4) scaleX(0.8); 
+}
+
+.form-container {
+    text-align: left;
+    z-index: 10;
+    background: transparent;
+    padding-top: 20px;
+}
+
+.brand-title {
+    font-size: 26px;
+    font-weight: 800;
+    color: #1a1a1a;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.subtitle {
+    font-size: 15px;
+    color: #6a737d;
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.input-group {
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: center;
+}
+
+input {
+    width: 300px;
+    padding: 14px 16px;
+    border: 1px solid #e1e4e8;
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.3s ease;
+    background-color: #ffffff;
+}
+
+input:focus, .input-focused {
+    border-color: #a3c8ff;
+    box-shadow: 0 0 0 1px #a3c8ff;
+}
+
+input::placeholder {
+    color: #8c959f;
+}
