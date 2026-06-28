@@ -16,7 +16,7 @@ async function cargarPosts() {
     
 //cambiar link dsp tmb
     try {
-        const respuesta = await fetch('http://127.0.0.1:8000/api/posts/', {
+        const respuesta = await fetch('/api/posts/', {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`, 
@@ -104,7 +104,7 @@ submitPostBtn.addEventListener('click', async () => {
         submitPostBtn.textContent = "Subiendo...ᓚᘏᗢ";
 
       // el link d aquí se debería cambiar por el q corresponda, este es local nda mas,creo
-        const respuesta = await fetch('http://127.0.0.1:8000/api/posts/', {  
+        const respuesta = await fetch('/api/posts/', {  
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`

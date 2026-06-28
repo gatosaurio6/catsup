@@ -21,7 +21,7 @@ async function obtenerRanking() {
 // este si conecta cn el back
     try {
         //cambiar url x la real
-        const respuesta = await fetch('http://127.0.0.1:8000/api/ranking/', {
+        const respuesta = await fetch('/api/ranking/', {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
