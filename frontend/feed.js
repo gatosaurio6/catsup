@@ -6,12 +6,14 @@ async function cargarPosts() {
     const contenedor = document.getElementById('contenedor-posts');
     
     const token = localStorage.getItem('access_token');
-
-    if (!token) {
-        alert("¡Debes iniciar sesión primero (o_O) !");
-        window.location.href = "index.html";
-        return;
-    }
+    
+// esto es pa obligar a iniciar sesion, quitar d comentario dsp, es solo pa probarlo
+//    if (!token) {
+//        alert("¡Debes iniciar sesión primero (o_O) !");
+//        window.location.href = "index.html";
+//        return;
+//    }
+    
 //cambiar link dsp tmb
     try {
         const respuesta = await fetch('http://127.0.0.1:8000/api/posts/', {
