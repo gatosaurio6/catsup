@@ -21,9 +21,15 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('gallery.urls')),
     
+    # galería (gatos, posts, comments)
+    path('api/', include('gallery.urls')), 
+    
+    # microservicio de login
     path('api/login/', include('login_app.urls')), 
+    
+    # rankin de gatos
+    path('api/ranking/', include('ranking_app.urls')),
 ]
 
 if settings.DEBUG:
