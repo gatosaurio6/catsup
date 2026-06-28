@@ -12,7 +12,7 @@ async function cargarPosts() {
         window.location.href = "index.html";
         return;
     }
-//cambiar link dsp tmb
+//cambiar link dsp tmb IMPORTANTEEEEEEEEEEEEEEEEEEEEEEE
     try {
         const respuesta = await fetch('http://127.0.0.1:8000/api/posts/', {
             method: 'GET',

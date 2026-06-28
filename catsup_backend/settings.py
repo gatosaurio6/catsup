@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'gallery',
     'storages',
     'corsheaders',
+    'login_app',
+    'ranking_app',
 ]
 
 MIDDLEWARE = [
