@@ -1,0 +1,65 @@
+---
+- name: Instalar Docker y clonar Microservicio en AWS
+  hosts: app_servers
+  become: true
+  tasks:
+    - name: 1. Actualizar el sistema (apt-get update)
+      apt:
+        update_cache: true
+        force_apt_get: true
+    - name: 2. instalar herramientas Docker
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certification
+          - curl
+          - software-properties-common
+        state: present
+    - name: 3. Agregar la clave oficial de Docker
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: 4. Agregar el repositorio oficial de Docker
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
+        state: present
+
+    - name: 5. Instalar Docker
+      apt:
+        name: docker-ce
+        state: present
+
+    - name: 6. Asegurar que Docker este encendido y activo
+      service:
+        name: docker
+        state: started
+        enabled: true
+
+#    - name: 7. Descargar y levantar el contenedor del frontend
+#      docker_container:
+#        name: frontend_app
+#        image: nginx:alpine
+#        state: started
+#        restart_policy: always
+#        ports:
+#          - "80:8000"
+    - name: 8. Descargar y levantar el contenedor de Autenticacion (Login)
+      docker_container:
+        name: backend
+        image: niquinpro1/catsup-backend:lastest
+        state: started
+        restart_policy: always
+        ports:
+          - "80:8000"
+        env:
+          DB_ENGINE: "django.db.backends.postgresql"
+          DB_HOST: "{{ db_host }}"       
+          DB_NAME: "{{ db_name }}"        
+          DB_USER: "{{ db_user }}"
+          DB_PASSWORD: "{{ db_password }}"
+          SECRET_KEY: "clave_secreta_de_produccion"
+          DEBUG: "True"
+          USE_S3: "False"
+    - name: 9. Ejecutar las migraciones de Django dentro del contenedor
+      command: docker exec backend python manage.py migrate
