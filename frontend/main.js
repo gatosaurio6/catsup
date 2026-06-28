@@ -24,7 +24,7 @@ loginBtn.addEventListener('click', async () => {
             
             localStorage.setItem('access_token', resultado.access);
             
-            alert("¡Bienvenido a Kittys.com!");
+            alert("¡Bienvenido a Catsup.com!"); 
         } else {
             console.error("Credenciales incorrectas");
             alert("Error: Revisa tu usuario o contraseña.");
