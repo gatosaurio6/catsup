@@ -108,11 +108,17 @@ resource "aws_lb_target_group" "alb_tg" {
     }
 }
 
-#resource "aws_lb_target_group_attachment" "tg_attach" {
-#    target_group_arn = aws_lb_target_group.alb_tg.arn
-#    target_id = aws_instance.app_server.id
-#    port = 80
-#}
+resource "aws_lb_target_group_attachment" "tg_attach" {
+    target_group_arn = aws_lb_target_group.alb_tg.arn
+    target_id = aws_instance.app_server.id
+    port = 80
+}
+
+resource "aws_lb_target_group_attachment" "tg_attach_2" {
+    target_group_arn = aws_lb_target_group.alb_tg.arn
+    target_id        = aws_instance.app_server_2.id # <--- ID de la segunda máquina
+    port             = 80
+}
 
 resource "aws_lb_listener" "http_listener" {
     load_balancer_arn = aws_lb.app_alb.arn
@@ -141,12 +147,6 @@ resource "aws_security_group" "backend_sg" {
         cidr_blocks = ["0.0.0.0/0"]
     }
     ingress {
-        from_port = 22
-        to_port = 22
-        protocol = "tcp"
-        cidr_blocks = ["0.0.0.0/0"]
-    }
-    egress {
         from_port = 22
         to_port = 22
         protocol = "tcp"
@@ -235,16 +235,37 @@ resource "aws_instance" "app_server" {
     tags = {Name = "servidor-${var.proyect_name}"}
 }
 
+resource "aws_instance" "app_server_2" {
+    ami                    = "ami-0c7217cdde317cfec"
+    instance_type          = "t2.micro"
+    subnet_id              = aws_subnet.public_az2.id
+    vpc_security_group_ids = [aws_security_group.backend_sg.id]
+    key_name               = aws_key_pair.deployer_key.key_name
+    tags                   = {Name = "servidor-${var.proyect_name}-az2"}
+}
+
 resource "aws_eip" "app_eip" {
     instance = aws_instance.app_server.id
     domain = "vpc"
     tags = {Name = "eip-${var.proyect_name}"}
 }
 
+resource "aws_eip" "app_eip_2" {
+    instance = aws_instance.app_server_2.id
+    domain   = "vpc"
+    tags     = {Name = "eip-${var.proyect_name}-az2"}
+}
+
 resource "local_file" "ansibe_inventory" {
-    content = <<EOT
+    content = <<-EOT
     [app_servers]
     ${aws_eip.app_eip.public_ip} ansible_user=ubuntu ansible_ssh_private_key_file=./llave-${var.proyect_name}.pem
+    ${aws_eip.app_eip_2.public_ip} ansible_user=ubuntu ansible_ssh_private_key_file=./llave-${var.proyect_name}.pem
+    [app_servers:vars]
+    db_host=${aws_db_instance.postgreSQL.address}
+    db_name=${var.db_name}
+    db_user=${var.db_user}
+    db_password=${var.db_password}
     EOT
     filename = "${path.module}/../ansible/inventory.ini"
 }
@@ -267,5 +288,10 @@ resource "local_file" "private_key_pem" {
 
 output "instancia_ip_publica" {
   value       = aws_eip.app_eip.public_ip
+  description = "IP creada"
+}
+
+output "instancia_ip_publica_2" {
+  value       = aws_eip.app_eip_2.public_ip
   description = "IP creada"
 }
