@@ -11,7 +11,7 @@
       apt:
         name:
           - apt-transport-https
-          - ca-certification
+          - ca-certificates
           - curl
           - software-properties-common
         state: present
@@ -27,7 +27,9 @@
 
     - name: 5. Instalar Docker
       apt:
-        name: docker-ce
+        name: 
+          - docker-ce
+          - docker-compose-plugin
         state: present
 
     - name: 6. Asegurar que Docker este encendido y activo
@@ -35,31 +37,31 @@
         name: docker
         state: started
         enabled: true
-
-#    - name: 7. Descargar y levantar el contenedor del frontend
-#      docker_container:
-#        name: frontend_app
-#        image: nginx:alpine
-#        state: started
-#        restart_policy: always
-#        ports:
-#          - "80:8000"
-    - name: 8. Descargar y levantar el contenedor de Autenticacion (Login)
-      docker_container:
-        name: backend
-        image: niquinpro1/catsup-backend:lastest
-        state: started
-        restart_policy: always
-        ports:
-          - "80:8000"
-        env:
-          DB_ENGINE: "django.db.backends.postgresql"
-          DB_HOST: "{{ db_host }}"       
-          DB_NAME: "{{ db_name }}"        
-          DB_USER: "{{ db_user }}"
-          DB_PASSWORD: "{{ db_password }}"
-          SECRET_KEY: "clave_secreta_de_produccion"
-          DEBUG: "True"
-          USE_S3: "False"
-    - name: 9. Ejecutar las migraciones de Django dentro del contenedor
-      command: docker exec backend python manage.py migrate
+    - name: 7. crear la carpeta del proyecto
+      file:
+        path: /home/ubuntu/app
+        state: directory
+        mode: '0755'
+    - name: 8. copiar el archivo default.conf de Nginx
+      copy:
+        src: ../nginx/default.conf
+        dest: /home/ubuntu/app/default.conf
+        mode: '0644'
+    - name: 9. copiar el docker-compose
+      template:
+        src: ../docker-compose-aws.yml
+        dest: /home/ubuntu/docker-compose-aws.yml
+        mode: '0644'
+    - name: 10. decargar imagenes y levantar
+      command: docker compose up -d
+      args:
+        chdir: /home/ubuntu/app
+    - name: 11. Ejecutar las migraciones del modulo gallery
+      command: docker exec app_gallery_1 python manage.py migrate
+      run_once: true
+    - name: 12. Ejecutar las migraciones del modulo login
+      command: docker exec app_login_1 python manage.py migrate
+      run_once: true
+    - name: 13. Ejecutar las migraciones en el modulo ranking
+      command: docker exec app_ranking_1 python manage.py migrate
+      run_once: true
