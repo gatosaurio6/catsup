@@ -12,4 +12,4 @@ COPY . /app/
 
 EXPOSE 8001
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8001", "config.wsgi:application"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8001", "catsup_backend.wsgi:application"]
