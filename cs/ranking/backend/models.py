@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.core.exceptions import ValidationError
 # Create your models here.
 
 class ranking (models.Model):
@@ -13,3 +13,18 @@ class ranking (models.Model):
     class Meta:
         db_table = "ranking"
         managed = True
+
+    def clean(self):
+        super().clean()
+        error = "não não amigão"
+
+        if self.valor not in self.OPCIONES_VALOR:
+            raise ValidationError({"valor": error})
+        if not self.id_post and not self.id_comentario:
+            raise ValidationError(error)
+        if self.id_post and self.id_comentario:
+            raise ValidationError(error)
+        
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args,**kwargs)

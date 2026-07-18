@@ -13,12 +13,14 @@ class rv(APIView):
         id_comentario = request.data.get("id_comentario")
         accion = request.data.get("accion")
 
+        error ={"não não amigão"}
+
         if accion == "like":
             valor_voto = 1
         elif accion == "dislike":
             valor_voto = -1
         else:
-            return Response ({"error": "Accion invalida"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response (error, status=status.HTTP_400_BAD_REQUEST)
         
         voto_existente = ranking.objects.filter(
             id_usuario = id_usuario,
