@@ -19,8 +19,13 @@ services:
     restart: always
   
   login:
-    image: niquinpro1/catsup-login:lastest
+    build:
+      context: ./login
+      dockerfile: login.dockerfile
+    container_name: catsup_login
     restart: always
+    ports:
+      - "8001:8000"
     environment:
       - DB_ENGINE=django.db.backends.postgresql
       - DB_HOST
@@ -44,9 +49,8 @@ services:
       - DEBUG=True
       - USE_S3=False
 
-  # 1. ¡NUEVO SERVICIO!: Añadimos comentarios para que se levante junto al resto
   comentarios:
-    image: niquinpro1/catsup-comentarios:lastest  # (Ignorando la imagen real por ahora, como pediste)
+    image: niquinpro1/catsup-comentarios:lastest
     restart: always
     environment:
       - DB_ENGINE=django.db.backends.postgresql
@@ -66,8 +70,6 @@ services:
       - "80:80"
     volumes:
       - ./default.conf:/etc/nginx/conf.d/default.conf
-    # 2. ¡IMPORTANTE!: Agregamos 'comentarios' aquí para que Nginx no intente
-    # arrancar antes de que el microservicio esté listo.
     depends_on:
       - frontend
       - gallery
