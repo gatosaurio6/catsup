@@ -20,7 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-4$*n889ae#45b42yk3@3$m%-c%p3p(t4fp7-89_5t*bwp6q7!d'
+SECRET_KEY = 'django-insecure-gn*_-xzf1h+*0#7(qpcd&-ew4*#^)n+7i(osg8#(0--l&1(m!j'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -37,9 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'login',
     'rest_framework',
-    'rest_framework_simplejwt',
+    'gallery',
 ]
 
 MIDDLEWARE = [
@@ -118,3 +117,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+import os
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

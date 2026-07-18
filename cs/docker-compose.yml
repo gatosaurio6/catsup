@@ -2,11 +2,18 @@ version: '3.8'
 
 services:
   frontend:
-    image: n
+    image: nginx:alpine
+    container_name: catsup_frontend_temporal
     restart: always
 
   gallery:
-    image: n 
+    build:
+      context: ./gallery
+      dockerfile: gallery.dockerfile
+    container_name: catsup_gallery
+    restart: always
+    ports:
+      - "8002:8000"
     environment:
       - DB_ENGINE=django.db.backends.postgresql
       - DB_HOST
@@ -16,7 +23,6 @@ services:
       - SECRET_KEY=clave_secreta_de_produccion
       - DEBUG=True
       - USE_S3=False
-    restart: always
   
   login:
     build:
@@ -37,7 +43,10 @@ services:
       - USE_S3=False
 
   ranking:
-    image: niquinpro1/catsup-ranking:lastest
+    build:
+      context: ./ranking
+      dockerfile: ranking.dockerfile
+    container_name: catsup_ranking
     restart: always
     environment:
       - DB_ENGINE=django.db.backends.postgresql
@@ -50,7 +59,10 @@ services:
       - USE_S3=False
 
   comentarios:
-    image: niquinpro1/catsup-comentarios:lastest
+    build:
+      context: ./comentarios
+      dockerfile: comentarios.dockerfile
+    container_name: catsup_comentarios
     restart: always
     environment:
       - DB_ENGINE=django.db.backends.postgresql
