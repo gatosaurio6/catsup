@@ -22,3 +22,8 @@ variable "db_name" {
 variable "aws_region" {
     type = string
 }
+
+variable "secret_key" {
+    type = string
+    sensitive = true
+}
