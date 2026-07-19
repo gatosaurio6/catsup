@@ -16,15 +16,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # 6. Copiamos e instalamos primero las dependencias de Python
-# (Hacer esto primero aprovecha la caché de Docker para que las compilaciones sean más rápidas)
-COPY requirements.txt /app/
+# (Usamos el punto para pegarlo exactamente en /app/ranking)
+COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 
 # 7. Copiamos todo el código de nuestro microservicio a la carpeta de trabajo
-COPY . /app/
+COPY . .
 
-# 8. Exponemos el puerto en el que va a correr Django (por defecto el 8000)
+# 8. Exponemos el puerto en el que va a correr Django (por defecto el 8000, pero aquí usas el 8002)
 EXPOSE 8002
 
 # 9. Comando para arrancar el servidor en producción usando Gunicorn

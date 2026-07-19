@@ -13,14 +13,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# 4. Copiar solo el archivo de requerimientos primero (para aprovechar la caché de Docker)
-COPY requirements.txt /app/login/
+# 4. Copiar solo el archivo de requerimientos primero (usamos el punto para la ruta actual)
+COPY requirements.txt .
 
 # 5. Instalar las librerías
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 6. Copiar el resto del código de tu proyecto al contenedor
-COPY . /app/
+# 6. Copiar el resto del código de tu proyecto al contenedor (doble punto)
+COPY . .
 
 # 7. Exponer el puerto por donde el servidor web de Django se comunicará
 EXPOSE 8000
