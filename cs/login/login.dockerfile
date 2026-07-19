@@ -6,10 +6,10 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 # 3. Crear una carpeta dentro del contenedor donde vivirá nuestro código
-WORKDIR /app
+WORKDIR /app/login
 
 # 4. Copiar solo el archivo de requerimientos primero (para aprovechar la caché de Docker)
-COPY requirements.txt /app/
+COPY requirements.txt /app/login/
 
 # 5. Instalar las librerías
 RUN pip install --no-cache-dir -r requirements.txt
