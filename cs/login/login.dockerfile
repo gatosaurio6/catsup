@@ -8,6 +8,11 @@ ENV PYTHONUNBUFFERED=1
 # 3. Crear una carpeta dentro del contenedor donde vivirá nuestro código
 WORKDIR /app/login
 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 # 4. Copiar solo el archivo de requerimientos primero (para aprovechar la caché de Docker)
 COPY requirements.txt /app/login/
 
