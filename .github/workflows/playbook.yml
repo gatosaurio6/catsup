@@ -1,0 +1,96 @@
+---
+- name: Despliegue profesional de Catsup en AWS
+  hosts: app_servers
+  become: True
+  tasks:
+    - name: 1. Actualizar caché de apt
+      apt:
+        update_cache: True
+        force_apt_get: True
+
+    - name: 2. Instalar dependencias de Docker
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+        state: present
+
+    - name: 3. Crear directorio para keyrings de apt
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: 4. Descargar clave oficial de Docker
+      get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: '0444'
+
+    - name: 4.1 Agregar repositorio oficial de Docker con el keyring correcto
+      apt_repository:
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        update_cache: True
+
+    - name: 5. Instalar Docker y plugin de compose
+      apt:
+        name:
+          - docker-ce
+          - docker-compose-plugin
+        state: present
+
+    - name: 6. Asegurar que Docker esté activo
+      service:
+        name: docker
+        state: started
+        enabled: True
+
+    - name: 6.1. Agregar usuario al grupo docker
+      user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
+
+    - name: 6.2. Reiniciar conexión para aplicar cambios de grupo
+      meta: reset_connection
+
+    - name: 7. Crear directorio de proyecto
+      file:
+        path: /opt/catsup
+        state: directory
+        mode: '0755'
+
+    - name: 7.5 Copiar carpeta de configuración Nginx
+      copy:
+        src: ../nginx/
+        dest: /opt/catsup/nginx/
+        mode: '0644'
+
+    - name: 8. Copiar docker-compose desde la raíz del proyecto
+      template:
+        src: ../docker-compose.yml.j2 
+        dest: /opt/catsup/docker-compose.yml
+        mode: '0644'
+
+    - name: 9. Bajar imágenes y levantar servicios
+      shell: docker compose pull && docker compose up -d
+      args:
+        chdir: /opt/catsup
+
+    - name: 9.5 Esperar a que los contenedores estén listos
+      pause:
+        seconds: 10
+
+    - name: 10. Migraciones Login
+      shell: docker compose exec -T login python /app/login/manage.py migrate
+      args:
+        chdir: /opt/catsup
+      run_once: True
+
+    - name: 11. Migraciones Ranking
+      shell: docker compose exec -T ranking python /app/ranking/manage.py migrate
+      args:
+        chdir: /opt/catsup
+      run_once: True
