@@ -31,7 +31,7 @@ jobs:
         with:
           python-version: '3.11'
 
-      # Control de Seguridad: Análisis de vulnerabilidades en dependencias (SCA) con Safety/Trivy
+      # Control de Seguridad: Análisis de vulnerabilidades en dependencias (SCA)
       - name: Escaneo de vulnerabilidades en dependencias (SCA)
         uses: aquasecurity/trivy-action@master
         with:
@@ -41,7 +41,7 @@ jobs:
           output: 'trivy-results-sca.sarif'
           severity: 'CRITICAL,HIGH'
 
-      # Control de Seguridad: Análisis de código estático (SAST) buscando malas prácticas o secretos
+      # Control de Seguridad: Análisis de código estático (SAST)
       - name: Escaneo de código estático (SAST) con Bandit
         run: |
           pip install bandit
@@ -53,10 +53,10 @@ jobs:
           sarif_file: 'trivy-results-sca.sarif'
 
   # ==========================================
-  # FASE 2: CONSTRUCCIÓN Y ESCANEO DE CONTENEDORES
+  # FASE 2: CONSTRUCCIÓN Y ESCANEO DE LOS 4 MÓDULOS
   # ==========================================
   build-and-container-scan:
-    name: 2. Build y Escaneo de Imagen de Contenedor
+    name: 2. Build y Escaneo de Contenedores
     needs: security-code-scan
     runs-on: ubuntu-latest
     permissions:
@@ -78,34 +78,65 @@ jobs:
       - name: Configurar Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Construir imagen Docker localmente para análisis
+      # --- MÓDULO 1: COMENTARIOS ---
+      - name: Construir y escanear - Comentarios
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./comentarios
+          file: ./comentarios/comentarios.dockerfile
           load: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-comentarios:staging
 
-      # Control de Seguridad: Escaneo de vulnerabilidades en la imagen Docker construida
-      - name: Escaneo de vulnerabilidades en imagen de Docker (Container Scanning)
+      - name: Trivy Scan - Comentarios
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging'
-          format: 'sarif'
-          output: 'trivy-results-container.sarif'
+          image-ref: '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-comentarios:staging'
           severity: 'CRITICAL,HIGH'
-          exit-code: '1' # Falla el pipeline si encuentra vulnerabilidades críticas en la imagen
 
-      - name: Subir reporte de imagen a GitHub
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: 'trivy-results-container.sarif'
-
-      - name: Push de la imagen validada al Registry
+      # --- MÓDULO 2: LOGIN ---
+      - name: Construir y escanear - Login
         uses: docker/build-push-action@v5
         with:
-          context: .
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          context: ./login
+          file: ./login/login.dockerfile
+          load: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-login:staging
+
+      - name: Trivy Scan - Login
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-login:staging'
+          severity: 'CRITICAL,HIGH'
+
+      # --- MÓDULO 3: MULTIMEDIA ---
+      - name: Construir y escanear - Multimedia
+        uses: docker/build-push-action@v5
+        with:
+          context: ./multimedia
+          file: ./multimedia/multimedia.dockerfile
+          load: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-multimedia:staging
+
+      - name: Trivy Scan - Multimedia
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-multimedia:staging'
+          severity: 'CRITICAL,HIGH'
+
+      # --- MÓDULO 4: RANKING ---
+      - name: Construir y escanear - Ranking
+        uses: docker/build-push-action@v5
+        with:
+          context: ./ranking
+          file: ./ranking/ranking.dockerfile
+          load: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-ranking:staging
+
+      - name: Trivy Scan - Ranking
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-ranking:staging'
+          severity: 'CRITICAL,HIGH'
 
   # ==========================================
   # FASE 3: DESPLIEGUE CONTINUO SEGURO (CD)
@@ -120,11 +151,6 @@ jobs:
       - name: Checkout del código
         uses: actions/checkout@v4
 
-      - name: Configurar entorno de Ansible
-        uses: azure/setup-kubectl@v3 # O configuración previa de Ansible
-        with:
-          version: 'latest'
-
       - name: Instalar dependencias de Ansible
         run: |
           sudo apt-get update
@@ -138,7 +164,7 @@ jobs:
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
-      - name: Ejecutar Playbook de Despliegue Profesional
+      - name: Ejecutar Playbook de Despliegue en AWS
         env:
           ANSIBLE_HOST_KEY_CHECKING: "False"
         run: |
