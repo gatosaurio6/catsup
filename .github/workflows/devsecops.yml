@@ -1,0 +1,28 @@
+name: Pipeline DevSecOps - Catsup
+
+# 1. ¿Cuándo se ejecuta esto? Cada vez que hagamos un push a la rama main
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  # ==========================================
+  # FASE 1: SECRET SCANNING
+  # ==========================================
+  secret-scanning:
+    name: Escaneo de Secretos y Credenciales
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el código del repositorio
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Necesario para que Gitleaks revise todo el historial
+
+      - name: Ejecutar Gitleaks (Secret Scanning)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
