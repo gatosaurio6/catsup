@@ -29,3 +29,7 @@ Comandos para DESCARGAR los cambios de GitHub a tu computadora
 2) git pull origin main   <----- #Trae y fusiona todo lo nuevo de la nube a tu PC:
 
  
+
+
+
+ usar " docker pull niquinpro1/catsup-ranking:latest " es de doker jiji
