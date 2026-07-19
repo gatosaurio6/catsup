@@ -41,7 +41,7 @@ jobs:
           output: 'trivy-results-sca.sarif'
           severity: 'CRITICAL,HIGH'
 
-      # Control de Seguridad: Análisis de código estático (SAST)
+      # Control de Seguridad: Análisis de código estático (SAST) con Bandit
       - name: Escaneo de código estático (SAST) con Bandit
         run: |
           pip install bandit
@@ -52,12 +52,49 @@ jobs:
         with:
           sarif_file: 'trivy-results-sca.sarif'
 
+  # ========================================================
+  # FASE 2: SEGURIDAD DE INFRAESTRUCTURA (IaC SCANNING)
+  # ========================================================
+  iac-security-scan:
+    name: 2. Escaneo IaC (Terraform y Dockerfiles)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      # Control de Seguridad: IaC Scanning sobre Terraform y Dockerfiles con Trivy
+      - name: Escaneo de Infraestructura como Código (IaC)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: './cs/terraform'
+          format: 'sarif'
+          output: 'trivy-results-iac.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Validar sintaxis de Terraform (Sin requerir conexión a AWS)
+        uses: hashicorp/setup-terraform@v3
+      - name: Terraform Init y Validate
+        run: |
+          cd cs/terraform
+          terraform init -backend=false
+          terraform validate
+
+      - name: Subir reporte de IaC a GitHub
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results-iac.sarif'
+
   # ==========================================
-  # FASE 2: CONSTRUCCIÓN Y ESCANEO DE LOS 4 MÓDULOS
+  # FASE 3: CONSTRUCCIÓN Y ESCANEO DE CONTENEDORES
   # ==========================================
   build-and-container-scan:
-    name: 2. Build y Escaneo de Contenedores
-    needs: security-code-scan
+    name: 3. Build y Escaneo de Contenedores
+    needs: [security-code-scan, iac-security-scan]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -137,35 +174,3 @@ jobs:
         with:
           image-ref: '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-ranking:staging'
           severity: 'CRITICAL,HIGH'
-
-  # ==========================================
-  # FASE 3: DESPLIEGUE CONTINUO SEGURO (CD)
-  # ==========================================
-  deploy:
-    name: 3. Despliegue Automatizado con Ansible
-    needs: build-and-container-scan
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-
-    steps:
-      - name: Checkout del código
-        uses: actions/checkout@v4
-
-      - name: Instalar dependencias de Ansible
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ansible
-
-      - name: Configurar llave privada SSH de AWS de forma segura
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
-        run: |
-          mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-
-      - name: Ejecutar Playbook de Despliegue en AWS
-        env:
-          ANSIBLE_HOST_KEY_CHECKING: "False"
-        run: |
-          ansible-playbook -i cs/infrastructure/ansible/inventory.ini cs/infrastructure/ansible/playbook.yml
