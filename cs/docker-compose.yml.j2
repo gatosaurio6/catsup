@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  frontend:
+    image: n
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+  
+  login:
+    image: niquinpro1/catsup-login:lastest
+    restart: always
+    environment:
+      - DB_ENGINE=django.db.backends.postgresql
+      - DB_HOST={{ db_host }}
+      - DB_USER={{ db_user }}
+      - DB_PASSWORD={{ db_password }}
+      - DB_NAME={{ db_name }}
+      - SECRET_KEY=clave_secreta_de_produccion
+      - DEBUG=True
+      - USE_S3=False
+      deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  ranking:
+    image: niquinpro1/catsup-ranking:lastest
+    restart: always
+    environment:
+      - DB_ENGINE=django.db.backends.postgresql
+      - DB_HOST={{ db_host }}
+      - DB_USER={{ db_user }}
+      - DB_PASSWORD={{ db_password }}
+      - DB_NAME={{ db_name }}
+      - SECRET_KEY=clave_secreta_de_produccion
+      - DEBUG=True
+      - USE_S3=False
+      deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx_proxy
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./default.conf:/etc/nginx/conf.d/default.conf
+    # 2. ¡IMPORTANTE!: Agregamos 'comentarios' aquí para que Nginx no intente
+    # arrancar antes de que el microservicio esté listo.
+    depends_on:
+      - frontend
+      - login
+      - ranking
