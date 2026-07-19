@@ -266,6 +266,7 @@ resource "local_file" "ansibe_inventory" {
     db_name=${var.db_name}
     db_user=${var.db_user}
     db_password=${var.db_password}
+    secret_key="${random_password.django_secret.result}"
     EOT
     filename = "${path.module}/../ansible/inventory.ini"
 }
@@ -294,4 +295,10 @@ output "instancia_ip_publica" {
 output "instancia_ip_publica_2" {
   value       = aws_eip.app_eip_2.public_ip
   description = "IP creada"
+}
+
+resource "random_password" "django_secret" {
+    length = 50
+    special = true
+    override_special = "!#$%&*()-_=+[]{}<>:?"
 }
