@@ -188,7 +188,7 @@ document.getElementById('contenedor-posts').addEventListener('click', async (e) 
     // like/enviar
     if (e.target.classList.contains('btn-enviar-comentario') || e.target.classList.contains('action-btn')) {
         if (!token) {
-            alert("¡Debes iniciar sesión para interactuar con los gatitos! 🐾");
+            alert("¡Debes iniciar sesión para interactuar con los gatitos!");
             modalLogin.style.display = 'block';
             return; 
         }
