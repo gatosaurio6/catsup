@@ -70,3 +70,4 @@ services:
       - gallery
       - login
       - ranking
+      - comentarios
