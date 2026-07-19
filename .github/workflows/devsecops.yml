@@ -1,28 +1,145 @@
-name: Pipeline DevSecOps - Catsup
+name: DevSecOps Pipeline - Catsup CI/CD
 
-# 1. ¿Cuándo se ejecuta esto? Cada vez que hagamos un push a la rama main
 on:
   push:
-    branches:
-      - main
+    branches: [ "main", "master" ]
   pull_request:
-    branches:
-      - main
+    branches: [ "main", "master" ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   # ==========================================
-  # FASE 1: SECRET SCANNING
+  # FASE 1: SEGURIDAD EN EL CÓDIGO (SAST & SCA)
   # ==========================================
-  secret-scanning:
-    name: Escaneo de Secretos y Credenciales
+  security-code-scan:
+    name: 1. Análisis Estático y Dependencias (SAST & SCA)
     runs-on: ubuntu-latest
-    steps:
-      - name: Descargar el código del repositorio
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0 # Necesario para que Gitleaks revise todo el historial
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
 
-      - name: Ejecutar Gitleaks (Secret Scanning)
-        uses: gitleaks/gitleaks-action@v2
+    steps:
+      - name: Checkout del código fuente
+        uses: actions/checkout@v4
+
+      - name: Configurar entorno Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # Control de Seguridad: Análisis de vulnerabilidades en dependencias (SCA) con Safety/Trivy
+      - name: Escaneo de vulnerabilidades en dependencias (SCA)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results-sca.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      # Control de Seguridad: Análisis de código estático (SAST) buscando malas prácticas o secretos
+      - name: Escaneo de código estático (SAST) con Bandit
+        run: |
+          pip install bandit
+          bandit -r . -f json -o bandit-report.json || true
+
+      - name: Subir resultados de seguridad a GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results-sca.sarif'
+
+  # ==========================================
+  # FASE 2: CONSTRUCCIÓN Y ESCANEO DE CONTENEDORES
+  # ==========================================
+  build-and-container-scan:
+    name: 2. Build y Escaneo de Imagen de Contenedor
+    needs: security-code-scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Autenticación en el Registro de Contenedores
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configurar Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Construir imagen Docker localmente para análisis
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          load: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging
+
+      # Control de Seguridad: Escaneo de vulnerabilidades en la imagen Docker construida
+      - name: Escaneo de vulnerabilidades en imagen de Docker (Container Scanning)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging'
+          format: 'sarif'
+          output: 'trivy-results-container.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1' # Falla el pipeline si encuentra vulnerabilidades críticas en la imagen
+
+      - name: Subir reporte de imagen a GitHub
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results-container.sarif'
+
+      - name: Push de la imagen validada al Registry
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+  # ==========================================
+  # FASE 3: DESPLIEGUE CONTINUO SEGURO (CD)
+  # ==========================================
+  deploy:
+    name: 3. Despliegue Automatizado con Ansible
+    needs: build-and-container-scan
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Configurar entorno de Ansible
+        uses: azure/setup-kubectl@v3 # O configuración previa de Ansible
+        with:
+          version: 'latest'
+
+      - name: Instalar dependencias de Ansible
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ansible
+
+      - name: Configurar llave privada SSH de AWS de forma segura
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SSH_PRIVATE_KEY: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+      - name: Ejecutar Playbook de Despliegue Profesional
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: "False"
+        run: |
+          ansible-playbook -i infrastructure/ansible/inventory.ini infrastructure/ansible/playbook.yml
