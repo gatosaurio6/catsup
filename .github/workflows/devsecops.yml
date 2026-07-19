@@ -82,8 +82,8 @@ jobs:
       - name: Construir y escanear - Comentarios
         uses: docker/build-push-action@v5
         with:
-          context: ./comentarios
-          file: ./comentarios/comentarios.dockerfile
+          context: ./cs/comentarios
+          file: ./cs/comentarios/comentarios.dockerfile
           load: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-comentarios:staging
 
@@ -97,8 +97,8 @@ jobs:
       - name: Construir y escanear - Login
         uses: docker/build-push-action@v5
         with:
-          context: ./login
-          file: ./login/login.dockerfile
+          context: ./cs/login
+          file: ./cs/login/login.dockerfile
           load: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-login:staging
 
@@ -112,8 +112,8 @@ jobs:
       - name: Construir y escanear - Multimedia
         uses: docker/build-push-action@v5
         with:
-          context: ./multimedia
-          file: ./multimedia/multimedia.dockerfile
+          context: ./cs/multimedia
+          file: ./cs/multimedia/multimedia.dockerfile
           load: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-multimedia:staging
 
@@ -127,8 +127,8 @@ jobs:
       - name: Construir y escanear - Ranking
         uses: docker/build-push-action@v5
         with:
-          context: ./ranking
-          file: ./ranking/ranking.dockerfile
+          context: ./cs/ranking
+          file: ./cs/ranking/ranking.dockerfile
           load: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-ranking:staging
 
@@ -168,4 +168,4 @@ jobs:
         env:
           ANSIBLE_HOST_KEY_CHECKING: "False"
         run: |
-          ansible-playbook -i infrastructure/ansible/inventory.ini infrastructure/ansible/playbook.yml
+          ansible-playbook -i cs/infrastructure/ansible/inventory.ini cs/infrastructure/ansible/playbook.yml
