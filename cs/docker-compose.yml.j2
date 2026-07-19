@@ -18,10 +18,10 @@ services:
       - DB_USER={{ db_user }}
       - DB_PASSWORD={{ db_password }}
       - DB_NAME={{ db_name }}
-      - SECRET_KEY=clave_secreta_de_produccion
+      - SECRET_KEY={{ secret_key }}
       - DEBUG=True
       - USE_S3=False
-      deploy:
+    deploy:
       resources:
         limits:
           memory: 256M
@@ -35,10 +35,10 @@ services:
       - DB_USER={{ db_user }}
       - DB_PASSWORD={{ db_password }}
       - DB_NAME={{ db_name }}
-      - SECRET_KEY=clave_secreta_de_produccion
+      - SECRET_KEY={{ secret_key }}
       - DEBUG=True
       - USE_S3=False
-      deploy:
+    deploy:
       resources:
         limits:
           memory: 256M
