@@ -266,7 +266,6 @@ resource "local_file" "ansibe_inventory" {
     db_name=${var.db_name}
     db_user=${var.db_user}
     db_password=${var.db_password}
-    ansible_ssh_common_args="-o StrictHostKeyCHecking=no"
     EOT
     filename = "${path.module}/../ansible/inventory.ini"
 }

@@ -1,5 +1,5 @@
 # 1. Usamos una imagen oficial de Python ligera
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 # 2. Evita que Python escriba archivos .pyc en el contenedor
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -7,7 +7,7 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 # 4. Creamos y nos situamos en la carpeta de la app dentro del contenedor
-WORKDIR /app
+WORKDIR /app/ranking
 
 # 5. Instalamos las dependencias del sistema necesarias por si acaso (como compiladores para BD)
 RUN apt-get update && apt-get install -y --no-install-recommends \

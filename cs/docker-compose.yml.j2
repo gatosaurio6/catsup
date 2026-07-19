@@ -1,0 +1,98 @@
+version: '3.8'
+
+services:
+  frontend:
+    image: n
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    environment:
+      - TZ=America/Santiago
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+  
+  login:
+    image: niquinpro1/catsup-login:lastest
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    environment:
+      - DB_ENGINE=django.db.backends.postgresql
+      - DB_HOST={{ db_host }}
+      - DB_USER={{ db_user }}
+      - DB_PASSWORD={{ db_password }}
+      - DB_NAME={{ db_name }}
+      - SECRET_KEY={{ secret_key }}
+      - DEBUG=True
+      - USE_S3=False
+      - TZ=America/Santiago
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  ranking:
+    image: niquinpro1/catsup-ranking:lastest
+    restart: always
+    logging: 
+      driver: "json-file"
+      options: 
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    environment:
+      - DB_ENGINE=django.db.backends.postgresql
+      - DB_HOST={{ db_host }}
+      - DB_USER={{ db_user }}
+      - DB_PASSWORD={{ db_password }}
+      - DB_NAME={{ db_name }}
+      - SECRET_KEY={{ secret_key }}
+      - DEBUG=True
+      - USE_S3=False
+      - TZ=America/Santiago
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx_proxy
+    restart: always
+    logging: 
+      driver: "json-file"
+      options: 
+        max-size: "10m"
+        max-file: "3"
+    environment:
+      - TZ=America/Santiago
+    ports:
+      - "80:80"
+    volumes:
+      - ./default.conf:/etc/nginx/conf.d/default.conf
+    # 2. ¡IMPORTANTE!: Agregamos 'comentarios' aquí para que Nginx no intente
+    # arrancar antes de que el microservicio esté listo.
+    depends_on:
+      frontend:
+        condition: service_started
+      login:
+        condition: service_healthy
+      ranking:
+        condition: service_healthy
