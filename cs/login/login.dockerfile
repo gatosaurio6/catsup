@@ -21,4 +21,4 @@ COPY . /app/
 EXPOSE 8000
 
 # 8. El comando que se ejecutará al encender el contenedor (0.0.0.0 permite que acepte conexiones externas)
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "backend.wsgi:application"]
