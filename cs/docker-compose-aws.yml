@@ -2,11 +2,11 @@ version: '3.8'
 
 services:
   frontend:
-    image: niquinpro1/catsup-frontend:lastest
+    image: niquinpro1/catsup-frontend:latest
     restart: always
 
   gallery:  
-    image: niquinpro1/catsup-gallery:lastest
+    image: niquinpro1/catsup-gallery:latest
     environment:
       - DB_ENGINE=django.db.backends.postgresql
       - DB_HOST
@@ -19,7 +19,7 @@ services:
     restart: always
 
   login:
-    image: niquinpro1/catsup-login:lastest
+    image: niquinpro1/catsup-login:latest
     restart: always
     environment:
       - DB_ENGINE=django.db.backends.postgresql
@@ -32,7 +32,20 @@ services:
       - USE_S3=False
 
   ranking:
-    image: niquinpro1/catsup-ranking:lastest
+    image: niquinpro1/catsup-ranking:latest
+    restart: always
+    environment:
+      - DB_ENGINE=django.db.backends.postgresql
+      - DB_HOST
+      - DB_USER
+      - DB_PASSWORD
+      - DB_NAME
+      - SECRET_KEY=clave_secreta_de_produccion
+      - DEBUG=True
+      - USE_S3=False
+
+  comentarios:
+    image: niquinpro1/catsup-comentarios:latest
     restart: always
     environment:
       - DB_ENGINE=django.db.backends.postgresql

@@ -17,7 +17,7 @@ services:
           memory: 256M
   
   login:
-    image: niquinpro1/catsup-login:lastest
+    image: niquinpro1/catsup-login:latest
     restart: always
     logging:
       driver: "json-file"
@@ -45,7 +45,7 @@ services:
           memory: 256M
 
   ranking:
-    image: niquinpro1/catsup-ranking:lastest
+    image: niquinpro1/catsup-ranking:latest
     restart: always
     logging: 
       driver: "json-file"
@@ -72,6 +72,34 @@ services:
         limits:
           memory: 256M
 
+  comentarios:
+    image: niquinpro1/catsup-comentarios:latest
+    restart: always
+    logging: 
+      driver: "json-file"
+      options: 
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    environment:
+      - DB_ENGINE=django.db.backends.postgresql
+      - DB_HOST={{ db_host }}
+      - DB_USER={{ db_user }}
+      - DB_PASSWORD={{ db_password }}
+      - DB_NAME={{ db_name }}
+      - SECRET_KEY={{ secret_key }}
+      - DEBUG=True
+      - USE_S3=False
+      - TZ=America/Santiago
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+  
   nginx:
     image: nginx:latest
     container_name: nginx_proxy

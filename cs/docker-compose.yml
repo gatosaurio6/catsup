@@ -22,7 +22,7 @@ services:
     restart: always
   
   login:
-    image: niquinpro1/catsup-login:lastest
+    image: niquinpro1/catsup-login:latest
     restart: always
     environment:
       - DB_ENGINE=django.db.backends.postgresql
@@ -35,7 +35,7 @@ services:
       - USE_S3=False
 
   ranking:
-    image: niquinpro1/catsup-ranking:lastest
+    image: niquinpro1/catsup-ranking:latest
     restart: always
     environment:
       - DB_ENGINE=django.db.backends.postgresql
@@ -47,9 +47,9 @@ services:
       - DEBUG=True
       - USE_S3=False
 
-  # 1. ¡NUEVO SERVICIO!: Añadimos comentarios para que se levante junto al resto
+  # COMENTA RIOOOOOO
   comentarios:
-    image: niquinpro1/catsup-comentarios:lastest  # (Ignorando la imagen real por ahora, como pediste)
+    image: niquinpro1/catsup-comentarios:latest
     restart: always
     environment:
       - DB_ENGINE=django.db.backends.postgresql
