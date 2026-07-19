@@ -9,6 +9,8 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    environment:
+      - TZ=America/Santiago
     deploy:
       resources:
         limits:
@@ -22,6 +24,11 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     environment:
       - DB_ENGINE=django.db.backends.postgresql
       - DB_HOST={{ db_host }}
@@ -31,6 +38,7 @@ services:
       - SECRET_KEY={{ secret_key }}
       - DEBUG=True
       - USE_S3=False
+      - TZ=America/Santiago
     deploy:
       resources:
         limits:
@@ -44,6 +52,11 @@ services:
       options: 
         max-size: "10m"
         max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     environment:
       - DB_ENGINE=django.db.backends.postgresql
       - DB_HOST={{ db_host }}
@@ -53,6 +66,7 @@ services:
       - SECRET_KEY={{ secret_key }}
       - DEBUG=True
       - USE_S3=False
+      - TZ=America/Santiago
     deploy:
       resources:
         limits:
@@ -67,6 +81,8 @@ services:
       options: 
         max-size: "10m"
         max-file: "3"
+    environment:
+      - TZ=America/Santiago
     ports:
       - "80:80"
     volumes:
@@ -74,6 +90,9 @@ services:
     # 2. ¡IMPORTANTE!: Agregamos 'comentarios' aquí para que Nginx no intente
     # arrancar antes de que el microservicio esté listo.
     depends_on:
-      - frontend
-      - login
-      - ranking
+      frontend:
+        condition: service_started
+      login:
+        condition: service_healthy
+      ranking:
+        condition: service_healthy
