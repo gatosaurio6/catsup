@@ -75,14 +75,22 @@
         mode: '0644'
 
     - name: 9. Bajar imágenes y levantar servicios
-      command: docker compose pull && docker compose up -d
+      shell: docker compose pull && docker compose up -d
       args:
         chdir: /opt/catsup
 
+    - name: 9.5 Esperar a que los contenedores estén listos
+      pause:
+        seconds: 10
+
     - name: 10. Migraciones Login
-      command: docker exec login python /app/login/manage.py migrate
+      shell: docker compose exec -T login python /app/login/manage.py migrate
+      args:
+        chdir: /opt/catsup
       run_once: True
 
     - name: 11. Migraciones Ranking
-      command: docker exec ranking python /app/ranking/manage.py migrate
+      shell: docker compose exec -T ranking python /app/ranking/manage.py migrate
+      args:
+        chdir: /opt/catsup
       run_once: True
