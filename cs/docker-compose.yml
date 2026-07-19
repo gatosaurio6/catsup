@@ -2,11 +2,11 @@ version: '3.8'
 
 services:
   frontend:
-    image: n
+    image: niquinpro1/catsup-frontend:latest
     restart: always
 
   multimedia:
-    image: n 
+    image: niquinpro1/catsup-multimedia:latest
     environment:
       - AZURE_ACCOUNT_NAME=tu_nombre_cuenta_aqui
       - AZURE_ACCOUNT_KEY=ESTO_ES_LO_QUE_VA_A_SER_EVALUADO
