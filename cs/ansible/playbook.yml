@@ -1,14 +1,14 @@
 ---
-- name: Instalar Docker y desplegar Microservicios en AWS
+- name: Despliegue profesional de Catsup en AWS
   hosts: app_servers
-  become: true
+  become: True
   tasks:
-    - name: 1. Actualizar el sistema (apt-get update)
+    - name: 1. Actualizar caché de apt
       apt:
-        update_cache: true
-        force_apt_get: true
+        update_cache: True
+        force_apt_get: True
 
-    - name: 2. Instalar herramientas requeridas del sistema
+    - name: 2. Instalar dependencias de Docker
       apt:
         name:
           - apt-transport-https
@@ -17,99 +17,72 @@
           - software-properties-common
         state: present
 
-    - name: 3. Agregar la clave oficial de GPG de Docker
-      apt_key:
+    - name: 3. Crear directorio para keyrings de apt
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: 4. Descargar clave oficial de Docker
+      get_url:
         url: https://download.docker.com/linux/ubuntu/gpg
-        state: present
+        dest: /etc/apt/keyrings/docker.asc
+        mode: '0444'
 
-    - name: 4. Agregar el repositorio de Docker (Autodetectando la versión de Ubuntu)
+    - name: 4.1 Agregar repositorio oficial de Docker con el keyring correcto
       apt_repository:
-        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
-        state: present
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        update_cache: True
 
-    - name: 5. Instalar Docker y Docker Compose V2
+    - name: 5. Instalar Docker y plugin de compose
       apt:
-        name: 
+        name:
           - docker-ce
           - docker-compose-plugin
         state: present
 
-    - name: 6. Asegurar que Docker esté encendido y activo
+    - name: 6. Asegurar que Docker esté activo
       service:
         name: docker
         state: started
-        enabled: true
+        enabled: True
 
-    - name: 7. Crear la carpeta del proyecto en el servidor
+    - name: 6.1. Agregar usuario al grupo docker
+      user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
+
+    - name: 6.2. Reiniciar conexión para aplicar cambios de grupo
+      meta: reset_connection
+
+    - name: 7. Crear directorio de proyecto
       file:
-        path: /home/ubuntu/app
+        path: /opt/catsup
         state: directory
-        owner: ubuntu
-        group: ubuntu
         mode: '0755'
 
-    - name: 8. Copiar el archivo default.conf de Nginx
+    - name: 7.5 Copiar carpeta de configuración Nginx
       copy:
-        src: ../nginx/default.conf
-        dest: /home/ubuntu/app/default.conf
-        owner: ubuntu
-        group: ubuntu
+        src: ../nginx/
+        dest: /opt/catsup/nginx/
         mode: '0644'
 
-    - name: 9. Copiar el docker-compose de AWS a la carpeta de la app
+    - name: 8. Copiar docker-compose desde la raíz del proyecto
       template:
-        src: ../docker-compose-aws.yml
-        # Lo guardamos directamente como docker-compose.yml dentro de /app
-        dest: /home/ubuntu/app/docker-compose.yml
-        owner: ubuntu
-        group: ubuntu
+        src: ../docker-compose.yml.j2 
+        dest: /opt/catsup/docker-compose.yml
         mode: '0644'
 
-    # ¡ESTE PASO ES NUEVO Y CLAVE!
-    - name: 10. Crear el archivo .env con los datos de base de datos de Terraform
-      copy:
-        dest: /home/ubuntu/app/.env
-        owner: ubuntu
-        group: ubuntu
-        mode: '0600'
-        content: |
-          DB_HOST={{ db_host }}
-          DB_NAME={{ db_name }}
-          DB_USER={{ db_user }}
-          DB_PASSWORD={{ db_password }}
-          DB_ENGINE=django.db.backends.postgresql
-          SECRET_KEY=clave_secreta_de_produccion
-          DEBUG=True
-          USE_S3=False
-
-    - name: 11. Descargar imágenes y levantar los contenedores
-      command: docker compose up -d
+    - name: 9. Bajar imágenes y levantar servicios
+      command: docker compose pull && docker compose up -d
       args:
-        chdir: /home/ubuntu/app
+        chdir: /opt/catsup
 
-    # Usamos "docker compose exec -T" apuntando al nombre del servicio en el compose. 
-    # El "-T" deshabilita la asignación de pseudo-TTY (necesario para scripts automatizados)
-    - name: 12. Ejecutar las migraciones del módulo gallery
-      command: docker compose exec -T gallery python manage.py migrate
-      args:
-        chdir: /home/ubuntu/app
-      run_once: true
+    - name: 10. Migraciones Login
+      command: docker exec login python /app/login/manage.py migrate
+      run_once: True
 
-    - name: 13. Ejecutar las migraciones del módulo login
-      command: docker compose exec -T login python manage.py migrate
-      args:
-        chdir: /home/ubuntu/app
-      run_once: true
-
-    - name: 14. Ejecutar las migraciones en el módulo ranking
-      command: docker compose exec -T ranking python manage.py migrate
-      args:
-        chdir: /home/ubuntu/app
-      run_once: true
-
-    # ¡Añadido también para el nuevo servicio!
-    - name: 15. Ejecutar las migraciones en el módulo comentarios
-      command: docker compose exec -T comentarios python manage.py migrate
-      args:
-        chdir: /home/ubuntu/app
-      run_once: true
+    - name: 11. Migraciones Ranking
+      command: docker exec ranking python /app/ranking/manage.py migrate
+      run_once: True
