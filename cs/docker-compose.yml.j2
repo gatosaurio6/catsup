@@ -17,7 +17,7 @@ services:
           memory: 256M
   
   multimedia:
-    image: niquinpro1/catsup-multimedia:latest
+    image: felinoi/catsup-multimedia:latest
     restart: always
     logging:
       driver: "json-file"
@@ -25,9 +25,9 @@ services:
         max-size: "10m"
         max-file: "3"
     environment:
-      - AZURE_ACCOUNT_NAME=tu_nombre_cuenta_aqui
-      - AZURE_ACCOUNT_KEY=ESTO_ES_LO_QUE_VA_A_SER_EVALUADO
-      - AZURE_CONTAINER=nombre_contenedor
+#      - AZURE_ACCOUNT_NAME=tu_nombre_cuenta_aqui
+#      - AZURE_ACCOUNT_KEY=ESTO_ES_LO_QUE_VA_A_SER_EVALUADO
+#      - AZURE_CONTAINER=nombre_contenedor
       - DB_ENGINE=django.db.backends.postgresql
       - DB_HOST={{ db_host }}
       - DB_USER={{ db_user }}
@@ -43,7 +43,7 @@ services:
           memory: 256M
 
   login:
-    image: niquinpro1/catsup-login:latest
+    image: felinoi/catsup-login:latest
     restart: always
     logging:
       driver: "json-file"
