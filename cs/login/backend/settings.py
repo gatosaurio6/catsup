@@ -26,7 +26,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-4$*n889ae#45b42yk3@3$
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["catsup.servemp3.com"]
+ALLOWED_HOSTS = ["catsup.servemp3.com", "localhost", "127.0.0.1", "*"]
 
 
 # Application definition

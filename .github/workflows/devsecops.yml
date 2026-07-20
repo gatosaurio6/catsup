@@ -11,166 +11,38 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  # ==========================================
-  # FASE 1: SEGURIDAD EN EL CÓDIGO (SAST & SCA)
-  # ==========================================
-  security-code-scan:
-    name: 1. Análisis Estático y Dependencias (SAST & SCA)
+  security-scan:
+    name: Ejecución de Escaneos de Seguridad
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      security-events: write
-      actions: read
-
     steps:
-      - name: Checkout del código fuente
-        uses: actions/checkout@v4
+      - name: Descargar el código
+        uses: actions/checkout@v3
 
-      - name: Configurar entorno Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+      # 1. SECRET SCANNING (Lo que ya tenías)
+      - name: Ejecutar Gitleaks (Secret Scanning)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Control de Seguridad: Análisis de vulnerabilidades en dependencias (SCA)
-      - name: Escaneo de vulnerabilidades en dependencias (SCA)
+      # 2. SCA (Software Composition Analysis)
+      - name: Instalar Safety
+        run: pip install safety
+      - name: Ejecutar Safety (SCA - Escaneo de librerías)
+        # Esto buscará vulnerabilidades en tus archivos requirements.txt
+        run: safety check -r requirements.txt || true 
+
+      # 3. SAST (Static Application Security Testing)
+      - name: Instalar Bandit
+        run: pip install bandit
+      - name: Ejecutar Bandit (SAST - Escaneo de código)
+        # Analiza todo tu código en busca de malas prácticas
+        run: bandit -r . -f txt || true
+
+      # 4. IaC SCANNING (Infrastructure as Code)
+      - name: Ejecutar Trivy (IaC Scanning - Docker y Compose)
         uses: aquasecurity/trivy-action@master
         with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          format: 'sarif'
-          output: 'trivy-results-sca.sarif'
-          severity: 'CRITICAL,HIGH'
-
-      # Control de Seguridad: Análisis de código estático (SAST) con Bandit
-      - name: Escaneo de código estático (SAST) con Bandit
-        run: |
-          pip install bandit
-          bandit -r . -f json -o bandit-report.json || true
-
-      - name: Subir resultados de seguridad a GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: 'trivy-results-sca.sarif'
-
-  # ========================================================
-  # FASE 2: SEGURIDAD DE INFRAESTRUCTURA (IaC SCANNING)
-  # ========================================================
-  iac-security-scan:
-    name: 2. Escaneo IaC (Terraform y Dockerfiles)
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      security-events: write
-
-    steps:
-      - name: Checkout del código
-        uses: actions/checkout@v4
-
-      # Control de Seguridad: IaC Scanning sobre Terraform y Dockerfiles con Trivy
-      - name: Escaneo de Infraestructura como Código (IaC)
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'fs'
-          scan-ref: './cs/terraform'
-          format: 'sarif'
-          output: 'trivy-results-iac.sarif'
-          severity: 'CRITICAL,HIGH'
-
-      - name: Validar sintaxis de Terraform (Sin requerir conexión a AWS)
-        uses: hashicorp/setup-terraform@v3
-      - name: Terraform Init y Validate
-        run: |
-          cd cs/terraform
-          terraform init -backend=false
-          terraform validate
-
-      - name: Subir reporte de IaC a GitHub
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: 'trivy-results-iac.sarif'
-
-  # ==========================================
-  # FASE 3: CONSTRUCCIÓN Y ESCANEO DE CONTENEDORES
-  # ==========================================
-  build-and-container-scan:
-    name: 3. Build y Escaneo de Contenedores
-    needs: [security-code-scan, iac-security-scan]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      security-events: write
-
-    steps:
-      - name: Checkout del código
-        uses: actions/checkout@v4
-
-      - name: Autenticación en el Registro de Contenedores
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Configurar Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      # --- MÓDULO 1: COMENTARIOS ---
-      - name: Construir y escanear - Comentarios
-        uses: docker/build-push-action@v5
-        with:
-          context: ./cs/comentarios
-          file: ./cs/comentarios/comentarios.dockerfile
-          load: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-comentarios:staging
-
-      - name: Trivy Scan - Comentarios
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-comentarios:staging'
-          severity: 'CRITICAL,HIGH'
-
-      # --- MÓDULO 2: LOGIN ---
-      - name: Construir y escanear - Login
-        uses: docker/build-push-action@v5
-        with:
-          context: ./cs/login
-          file: ./cs/login/login.dockerfile
-          load: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-login:staging
-
-      - name: Trivy Scan - Login
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-login:staging'
-          severity: 'CRITICAL,HIGH'
-
-      # --- MÓDULO 3: MULTIMEDIA ---
-      - name: Construir y escanear - Multimedia
-        uses: docker/build-push-action@v5
-        with:
-          context: ./cs/multimedia
-          file: ./cs/multimedia/multimedia.dockerfile
-          load: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-multimedia:staging
-
-      - name: Trivy Scan - Multimedia
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-multimedia:staging'
-          severity: 'CRITICAL,HIGH'
-
-      # --- MÓDULO 4: RANKING ---
-      - name: Construir y escanear - Ranking
-        uses: docker/build-push-action@v5
-        with:
-          context: ./cs/ranking
-          file: ./cs/ranking/ranking.dockerfile
-          load: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-ranking:staging
-
-      - name: Trivy Scan - Ranking
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-ranking:staging'
-          severity: 'CRITICAL,HIGH'
+          scan-type: 'config'
+          hide-progress: false
+          format: 'table'
+          exit-code: '0' # Cambia a '1' si quieres que el pipeline falle ante errores

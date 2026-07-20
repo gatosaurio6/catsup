@@ -1,5 +1,22 @@
+# --- Python ---
 venv/
 __pycache__/
 *.pyc
-db.sqlite3
 .env
+db.sqlite3
+
+# --- Terraform (Para evitar errores de nombres largos y binarios) ---
+terraform/terraform.exe
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.backup
+
+# --- Seguridad / Ansible (¡CRÍTICO!) ---
+# Nunca subas llaves privadas al repositorio
+*.pem
+*.key
+
+# --- IDE / Sistema Operativo ---
+.vscode/
+.DS_Store

@@ -2,11 +2,15 @@ version: '3.8'
 
 services:
   frontend:
-    image: niquinpro1/catsup-frontend:latest
+    image: nginx:alpine
+    volumes:
+      - ./feed:/usr/share/nginx/html
     restart: always
 
   multimedia:
-    image: niquinpro1/catsup-multimedia:latest
+    build:
+      context: ./multimedia
+      dockerfile: multimedia.dockerfile
     environment:
       - AZURE_ACCOUNT_NAME=tu_nombre_cuenta_aqui
       - AZURE_ACCOUNT_KEY=ESTO_ES_LO_QUE_VA_A_SER_EVALUADO
@@ -22,7 +26,9 @@ services:
     restart: always
   
   login:
-    image: niquinpro1/catsup-login:latest
+    build:
+      context: ./login
+      dockerfile: login.dockerfile
     restart: always
     environment:
       - DB_ENGINE=django.db.backends.postgresql
@@ -35,7 +41,9 @@ services:
       - USE_S3=False
 
   ranking:
-    image: niquinpro1/catsup-ranking:latest
+    build:
+      context: ./ranking
+      dockerfile: ranking.dockerfile
     restart: always
     environment:
       - DB_ENGINE=django.db.backends.postgresql
@@ -47,9 +55,10 @@ services:
       - DEBUG=True
       - USE_S3=False
 
-  # COMENTA RIOOOOOO
   comentarios:
-    image: niquinpro1/catsup-comentarios:latest
+    build:
+      context: ./comentarios
+      dockerfile: comentarios.dockerfile
     restart: always
     environment:
       - DB_ENGINE=django.db.backends.postgresql
@@ -69,8 +78,6 @@ services:
       - "80:80"
     volumes:
       - ./default.conf:/etc/nginx/conf.d/default.conf
-    # 2. ¡IMPORTANTE!: Agregamos 'comentarios' aquí para que Nginx no intente
-    # arrancar antes de que el microservicio esté listo.
     depends_on:
       - frontend
       - multimedia
